@@ -14,7 +14,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
-import filesize
+from humanize import filesize
+from tqdm import tqdm
 
 # Statistics to see how much I actually get from this :D
 stats = {
@@ -116,6 +117,7 @@ def is_ignored(file: Path) -> bool:
 
 # *The* main part :sparkles:
 # Iterate through all video files
+target_videos: list[Path] = []
 for _ext in COMPRESSED_EXTENSIONS + list(map(lambda x: x.upper(), COMPRESSED_EXTENSIONS)):
     for file in INPUT_DIR.glob(f"*.{_ext}"):
         stats["total_videos_found"] += 1
@@ -125,10 +127,13 @@ for _ext in COMPRESSED_EXTENSIONS + list(map(lambda x: x.upper(), COMPRESSED_EXT
         if file_was_compressed(file):
             print(f"Skipping {file} - already compressed")
             continue
-        compress_file_h265_720p_30fps(file)
-        stats["total_videos_compressed"] += 1
+        target_videos.append(file)
 
-# Print all stats
+for file in tqdm(target_videos):
+    compress_file_h265_720p_30fps(file)
+    stats["total_videos_compressed"] += 1
+
+# Done - print all stats
 print(f"Videos found: {stats['total_videos_found']}")
 print(f"Videos compressed: {stats['total_videos_compressed']}")
 print(f"Uncompressed space: {filesize.naturalsize(stats['uncompressed_space'])}")
