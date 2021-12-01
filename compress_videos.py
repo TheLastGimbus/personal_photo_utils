@@ -56,7 +56,6 @@ INPUT_DIR = Path(args.input)
 ORIGINALS_DIR = Path(args.originals if args.originals else "../../_camera_originals")
 OUTPUT_DIR = Path(args.output if args.output else args.input)
 CMPIGNORE_FILE = Path(args.cmpignore if args.cmpignore else INPUT_DIR / ".cmpignore")
-CMPIGNORE_GLOBS: list[str] = []
 
 logger.remove()
 logger.add(
@@ -116,11 +115,6 @@ def compress_file_h265_720p_30fps(file: Path):
     shutil.move(file, ORIGINALS_DIR)
 
 
-if CMPIGNORE_FILE.exists():
-    with CMPIGNORE_FILE.open() as f:
-        CMPIGNORE_GLOBS = [line.strip() for line in f]
-
-
 def is_ignored(file: Path, ignore_globs: list[str]) -> bool:
     """
     :return: if file should be ignored (matches any glob in .cmpignore)
@@ -137,12 +131,18 @@ def is_ignored(file: Path, ignore_globs: list[str]) -> bool:
 def main():
     logger.debug(f"Starting compression in {INPUT_DIR}")
     logger.trace(f"Output dir: {OUTPUT_DIR} ; Original dir: {ORIGINALS_DIR}")
-    logger.trace(f"Ignoring files matching: \n" + "\n".join(CMPIGNORE_GLOBS))
+
+    cmpignore_globs = []
+    if CMPIGNORE_FILE.exists():
+        with CMPIGNORE_FILE.open() as f:
+            cmpignore_globs = [line.strip() for line in f.read().split()]
+        logger.trace(f"Ignoring files matching: \n" + "\n".join(cmpignore_globs))
+
     target_videos: list[Path] = []
     for _ext in COMPRESSED_EXTENSIONS + list(map(lambda x: x.upper(), COMPRESSED_EXTENSIONS)):
         for file in INPUT_DIR.glob(f"*.{_ext}"):
             stats["total_videos_found"] += 1
-            if is_ignored(file, CMPIGNORE_GLOBS):
+            if is_ignored(file, cmpignore_globs):
                 logger.debug(f"Ignoring {file} - .cmpignore")
                 continue
             if file_was_compressed(file):
