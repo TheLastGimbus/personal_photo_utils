@@ -9,7 +9,7 @@ Thanks to this naming scheme, it automatically skips all files with ".cmp" in th
 Also, you can put a .cmpignore file in the input folder, and it will skip files that match globs in it.
 But don't be too fast - it's not as advanced as the .gitignore, stuff like "!" will not work :c
 """
-import argparse as ap
+import argparse
 import shutil
 import subprocess
 import sys
@@ -43,14 +43,14 @@ def file_was_compressed(file: Path) -> bool:
 
 COMPRESSED_EXTENSIONS = ["mp4"]
 
-parser = ap.ArgumentParser()
-parser.add_argument("--input", "-i", help="Input dir with uncompressed", required=False, default=".")
-parser.add_argument("--originals", help="Output dir for originals", required=False)
-parser.add_argument("--output", "-o", help="Output dir for compressed", required=False)
-parser.add_argument("--cmpignore", help="Location of .cmpignore file which contains files to ignore", required=False)
-parser.add_argument("--verbose", "-v", help="Verbose logging - all levels", action="store_true")
-parser.add_argument("--log-file", help="Log file location", required=False, default="compress_videos_py.log")
-args = parser.parse_args()
+ap = argparse.ArgumentParser()
+ap.add_argument("--input", "-i", help="Input dir with uncompressed", required=False, default=".")
+ap.add_argument("--originals", help="Output dir for originals", required=False)
+ap.add_argument("--output", "-o", help="Output dir for compressed", required=False)
+ap.add_argument("--cmpignore", help="Location of .cmpignore file which contains files to ignore", required=False)
+ap.add_argument("--verbose", "-v", help="Verbose logging - all levels", action="store_true")
+ap.add_argument("--log-file", help="Log file location", required=False, default="compress_videos_py.log")
+args = ap.parse_args()
 
 INPUT_DIR = Path(args.input)
 ORIGINALS_DIR = Path(args.originals if args.originals else "../../_camera_originals")
