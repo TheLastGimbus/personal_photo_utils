@@ -49,6 +49,7 @@ parser.add_argument("--originals", help="Output dir for originals", required=Fal
 parser.add_argument("--output", "-o", help="Output dir for compressed", required=False)
 parser.add_argument("--cmpignore", help="Location of .cmpignore file which contains files to ignore", required=False)
 parser.add_argument("--verbose", "-v", help="Verbose logging - all levels", action="store_true")
+parser.add_argument("--log-file", help="Log file location", required=False, default="compress_videos_py.log")
 args = parser.parse_args()
 
 INPUT_DIR = Path(args.input)
@@ -65,7 +66,7 @@ logger.add(
            "<level>{message}</level>",
     level="TRACE" if args.verbose else "INFO",
 )
-logger.add("compress_videos_py.log", level="TRACE", encoding="utf8", rotation="300 MB")
+logger.add(args.log_file, level="TRACE", encoding="utf8", rotation="500 MB")
 
 
 def get_video_size(file: Path) -> tuple[int, int]:
@@ -132,25 +133,34 @@ def is_ignored(file: Path) -> bool:
 
 # *The* main part :sparkles:
 # Iterate through all video files
-target_videos: list[Path] = []
-for _ext in COMPRESSED_EXTENSIONS + list(map(lambda x: x.upper(), COMPRESSED_EXTENSIONS)):
-    for file in INPUT_DIR.glob(f"*.{_ext}"):
-        stats["total_videos_found"] += 1
-        if is_ignored(file):
-            logger.debug(f"Ignoring {file} - .cmpignore")
-            continue
-        if file_was_compressed(file):
-            logger.trace(f"Skipping {file} - already compressed")
-            continue
-        target_videos.append(file)
+@logger.catch(onerror=lambda e: sys.exit(10))
+def main():
+    logger.debug(f"Starting compression in {INPUT_DIR}")
+    logger.trace(f"Output dir: {OUTPUT_DIR} ; Original dir: {ORIGINALS_DIR}")
+    logger.trace(f"Ignoring files matching: \n" + "\n".join(CMPIGNORE_GLOBS))
+    target_videos: list[Path] = []
+    for _ext in COMPRESSED_EXTENSIONS + list(map(lambda x: x.upper(), COMPRESSED_EXTENSIONS)):
+        for file in INPUT_DIR.glob(f"*.{_ext}"):
+            stats["total_videos_found"] += 1
+            if is_ignored(file):
+                logger.debug(f"Ignoring {file} - .cmpignore")
+                continue
+            if file_was_compressed(file):
+                logger.trace(f"Skipping {file} - already compressed")
+                continue
+            target_videos.append(file)
 
-for file in tqdm(target_videos):
-    compress_file_h265_720p_30fps(file)
-    stats["total_videos_compressed"] += 1
+    for file in tqdm(target_videos):
+        compress_file_h265_720p_30fps(file)
+        stats["total_videos_compressed"] += 1
 
-# Done - print all stats
-logger.success(f"Videos found: {stats['total_videos_found']}")
-logger.success(f"Videos compressed: {stats['total_videos_compressed']}")
-logger.success(f"Uncompressed space: {filesize.naturalsize(stats['uncompressed_space'])}")
-logger.success(f"Compressed space: {filesize.naturalsize(stats['compressed_space'])}")
-logger.success(f"Saved space: {filesize.naturalsize(stats['uncompressed_space'] - stats['compressed_space'])}")
+    # Done - print all stats
+    logger.success(f"Videos found: {stats['total_videos_found']}")
+    logger.success(f"Videos compressed: {stats['total_videos_compressed']}")
+    logger.success(f"Uncompressed space: {filesize.naturalsize(stats['uncompressed_space'])}")
+    logger.success(f"Compressed space: {filesize.naturalsize(stats['compressed_space'])}")
+    logger.success(f"Saved space: {filesize.naturalsize(stats['uncompressed_space'] - stats['compressed_space'])}")
+
+
+if __name__ == "__main__":
+    main()
