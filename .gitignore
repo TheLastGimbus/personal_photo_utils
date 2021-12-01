@@ -7,4 +7,5 @@ __pycache__/
 *.pyc
 *.pyo
 
+__personal_photo_utils_test_data__/
 *.log
