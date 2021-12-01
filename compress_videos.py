@@ -121,11 +121,11 @@ if CMPIGNORE_FILE.exists():
         CMPIGNORE_GLOBS = [line.strip() for line in f]
 
 
-def is_ignored(file: Path) -> bool:
+def is_ignored(file: Path, ignore_globs: list[str]) -> bool:
     """
     :return: if file should be ignored (matches any glob in .cmpignore)
     """
-    for glob in CMPIGNORE_GLOBS:
+    for glob in ignore_globs:
         if file.match(glob):
             return True
     return False
@@ -142,7 +142,7 @@ def main():
     for _ext in COMPRESSED_EXTENSIONS + list(map(lambda x: x.upper(), COMPRESSED_EXTENSIONS)):
         for file in INPUT_DIR.glob(f"*.{_ext}"):
             stats["total_videos_found"] += 1
-            if is_ignored(file):
+            if is_ignored(file, CMPIGNORE_GLOBS):
                 logger.debug(f"Ignoring {file} - .cmpignore")
                 continue
             if file_was_compressed(file):
