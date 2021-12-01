@@ -12,9 +12,11 @@ But don't be too fast - it's not as advanced as the .gitignore, stuff like "!" w
 import argparse as ap
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 from humanize import filesize
+from loguru import logger
 from tqdm import tqdm
 
 # Statistics to see how much I actually get from this :D
@@ -46,6 +48,7 @@ parser.add_argument("--input", "-i", help="Input dir with uncompressed", require
 parser.add_argument("--originals", help="Output dir for originals", required=False)
 parser.add_argument("--output", "-o", help="Output dir for compressed", required=False)
 parser.add_argument("--cmpignore", help="Location of .cmpignore file which contains files to ignore", required=False)
+parser.add_argument("--verbose", "-v", help="Verbose logging - all levels", action="store_true")
 args = parser.parse_args()
 
 INPUT_DIR = Path(args.input)
@@ -53,6 +56,16 @@ ORIGINALS_DIR = Path(args.originals if args.originals else "../../_camera_origin
 OUTPUT_DIR = Path(args.output if args.output else args.input)
 CMPIGNORE_FILE = Path(args.cmpignore if args.cmpignore else INPUT_DIR / ".cmpignore")
 CMPIGNORE_GLOBS: list[str] = []
+
+logger.remove()
+logger.add(
+    sys.stdout, colorize=True,
+    format="<green>{time:HH:mm:ss}</green> | "
+           "<level>{level: <8}</level> | "
+           "<level>{message}</level>",
+    level="TRACE" if args.verbose else "INFO",
+)
+logger.add("compress_videos_py.log", level="TRACE", encoding="utf8", rotation="300 MB")
 
 
 def get_video_size(file: Path) -> tuple[int, int]:
@@ -78,21 +91,23 @@ def get_ffmpeg_dimens(input_size: tuple[int, int], max_res: int) -> str:
 
 
 def compress_file_h265_720p_30fps(file: Path):
-    print(f"Compressing {file}")
+    logger.info(f"Compressing {file}")
     # Add ".cmp" before ".mp4"
     output_file = file.with_stem(file.stem + "." + EXTENSION_NAMESPACES["h265_720p_30fps"])
     out_path = OUTPUT_DIR / output_file.name
     if out_path.exists():
         raise Exception(f"Output file {out_path} already exists")
-    print(f"Output file {out_path}")
+    logger.debug(f"Output file {out_path}")
 
     # Compress with ffmpeg - set max resolution to 720p, 30fps and H.265 encoding
-    subprocess.run(
+    ffproc = subprocess.run(
         ["ffmpeg", "-i", str(file)] +  # Watch out for splitting the file name :P
         f"-map_metadata 0 -vf {get_ffmpeg_dimens(get_video_size(file), 720)},fps=30 -c:v libx265 ".split()
         + [str(out_path)],
         check=True, capture_output=True
     )
+    logger.trace(ffproc.stdout.decode('utf-8'))
+    logger.trace(ffproc.stderr.decode('utf-8'))
     shutil.copystat(file, out_path)
     # Save sizes to see how much we save later
     stats["uncompressed_space"] += file.stat().st_size
@@ -122,10 +137,10 @@ for _ext in COMPRESSED_EXTENSIONS + list(map(lambda x: x.upper(), COMPRESSED_EXT
     for file in INPUT_DIR.glob(f"*.{_ext}"):
         stats["total_videos_found"] += 1
         if is_ignored(file):
-            print(f"Ignoring {file} - .cmpignore")
+            logger.debug(f"Ignoring {file} - .cmpignore")
             continue
         if file_was_compressed(file):
-            print(f"Skipping {file} - already compressed")
+            logger.trace(f"Skipping {file} - already compressed")
             continue
         target_videos.append(file)
 
@@ -134,8 +149,8 @@ for file in tqdm(target_videos):
     stats["total_videos_compressed"] += 1
 
 # Done - print all stats
-print(f"Videos found: {stats['total_videos_found']}")
-print(f"Videos compressed: {stats['total_videos_compressed']}")
-print(f"Uncompressed space: {filesize.naturalsize(stats['uncompressed_space'])}")
-print(f"Compressed space: {filesize.naturalsize(stats['compressed_space'])}")
-print(f"Saved space: {filesize.naturalsize(stats['uncompressed_space'] - stats['compressed_space'])}")
+logger.success(f"Videos found: {stats['total_videos_found']}")
+logger.success(f"Videos compressed: {stats['total_videos_compressed']}")
+logger.success(f"Uncompressed space: {filesize.naturalsize(stats['uncompressed_space'])}")
+logger.success(f"Compressed space: {filesize.naturalsize(stats['compressed_space'])}")
+logger.success(f"Saved space: {filesize.naturalsize(stats['uncompressed_space'] - stats['compressed_space'])}")
