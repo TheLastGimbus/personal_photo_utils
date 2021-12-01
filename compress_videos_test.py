@@ -44,7 +44,7 @@ def test_main():
     cv.main()
 
     # That would mean .cmpignore is not working!
-    assert cv.stats['total_videos_found'] != cv.stats['total_videos_compressed']
+    assert cv.stats['total_videos_found'] > cv.stats['total_videos_compressed']
     # That would mean we are actually losing space!
     assert cv.stats['uncompressed_space'] - cv.stats['compressed_space'] > 0
 
@@ -56,3 +56,9 @@ def test_main():
     assert set(map(lambda x: x.name, cv.ORIGINALS_DIR.glob('*'))) == {
         'video-1533589738.mp4', 'VID_20210407_014635.mp4'
     }
+    for filename in datetimes:
+        file = cv.OUTPUT_DIR / filename
+        if not file.exists():
+            # If it doesn't exist then it was compressed. Very good! But check it!
+            file = file.with_stem(file.stem + "." + cv.EXTENSION_NAMESPACES["h265_720p_30fps"])
+        assert file.stat().st_mtime == datetimes[filename]
