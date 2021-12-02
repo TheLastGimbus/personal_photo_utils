@@ -47,6 +47,7 @@ def test_main():
     assert cv.stats['total_videos_found'] > cv.stats['total_videos_compressed']
     # That would mean we are actually losing space!
     assert cv.stats['uncompressed_space'] - cv.stats['compressed_space'] > 0
+    assert cv.stats['total_videos_ignored'] == 1
 
     assert set(map(lambda x: x.name, cv.OUTPUT_DIR.glob('*'))) == {
         'video-1533589738.cmp1.mp4', '.cmpignore', 'editing_multiple_lines_router_admin_pt2.webm',
