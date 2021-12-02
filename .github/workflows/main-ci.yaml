@@ -20,9 +20,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
       - uses: FedericoCarboni/setup-ffmpeg@v1
-          with:
-            token: ${{ secrets.GITHUB_TOKEN }}
-          id: setup-ffmpeg
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+        id: setup-ffmpeg
       - name: Download test repo
         # The ">" replaces newlines with spaces
         run: >
