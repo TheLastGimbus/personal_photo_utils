@@ -2,7 +2,7 @@
 """
 Compress videos using ffmpeg
 
-Default config for now is: 720p at max, 30fps, H.264
+Default config for now is: 720p at max, 30fps, H.265
 Renames files from "name.mp4" to "name.cmp1.mp4", and moves original pure .mp4 file to given folder
 Thanks to this naming scheme, it automatically skips all files with ".cmp" in the name
 
