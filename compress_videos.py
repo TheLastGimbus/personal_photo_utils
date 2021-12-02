@@ -23,6 +23,7 @@ from tqdm import tqdm
 stats = {
     "total_videos_found": 0,
     "total_videos_compressed": 0,
+    "total_videos_ignored": 0,
     "uncompressed_space": 0,
     "compressed_space": 0
 }
@@ -143,6 +144,7 @@ def main():
         for file in INPUT_DIR.glob(f"*.{_ext}"):
             stats["total_videos_found"] += 1
             if is_ignored(file, cmpignore_globs):
+                stats["total_videos_ignored"] += 1
                 logger.debug(f"Ignoring {file} - .cmpignore")
                 continue
             if file_was_compressed(file):
@@ -156,6 +158,7 @@ def main():
 
     # Done - print all stats
     logger.success(f"Videos found: {stats['total_videos_found']}")
+    logger.success(f"Videos ignored: {stats['total_videos_ignored']}")
     logger.success(f"Videos compressed: {stats['total_videos_compressed']}")
     logger.success(f"Uncompressed space: {filesize.naturalsize(stats['uncompressed_space'])}")
     logger.success(f"Compressed space: {filesize.naturalsize(stats['compressed_space'])}")
