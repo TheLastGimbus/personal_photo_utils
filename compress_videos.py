@@ -132,6 +132,10 @@ def is_ignored(file: Path, ignore_globs: list[str]) -> bool:
 def main():
     logger.debug(f"Starting compression in {INPUT_DIR}")
     logger.trace(f"Output dir: {OUTPUT_DIR} ; Original dir: {ORIGINALS_DIR}")
+    for dir in [OUTPUT_DIR, ORIGINALS_DIR]:
+        if not dir.exists():
+            logger.info(f"Creating dir {dir}")
+            dir.mkdir(parents=True)
 
     cmpignore_globs = []
     if CMPIGNORE_FILE.exists():
