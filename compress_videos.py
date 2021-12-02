@@ -10,7 +10,9 @@ Also, you can put a .cmpignore file in the input folder, and it will skip files 
 But don't be too fast - it's not as advanced as the .gitignore, stuff like "!" will not work :c
 """
 import argparse
+import os
 import shutil
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -68,6 +70,15 @@ logger.add(
 )
 logger.add(args.log_file, level="TRACE", encoding="utf8", rotation="500 MB")
 
+# Graceful handling of Ctrl-C
+SHUTDOWN = False
+
+
+def keeb_interrupt_handler(signal, frame):
+    logger.warning("Shutting down gracefully...")
+    global SHUTDOWN
+    SHUTDOWN = True
+
 
 def get_video_size(file: Path) -> tuple[int, int]:
     """
@@ -75,7 +86,7 @@ def get_video_size(file: Path) -> tuple[int, int]:
     """
     res_str = subprocess.run(
         f"ffprobe -v error -select_streams v -show_entries stream=width,height -of csv=p=0:s=x ".split() + [str(file)],
-        check=True, capture_output=True
+        preexec_fn=os.setpgrp, check=True, capture_output=True
     )
     w, h = res_str.stdout.decode('utf-8').split("x")
     return int(w), int(h)
@@ -100,13 +111,21 @@ def compress_file_h265_720p_30fps(file: Path):
         raise Exception(f"Output file {out_path} already exists")
     logger.debug(f"Output file {out_path}")
 
-    # Compress with ffmpeg - set max resolution to 720p, 30fps and H.265 encoding
-    ffproc = subprocess.run(
-        ["ffmpeg", "-i", str(file)] +  # Watch out for splitting the file name :P
-        f"-map_metadata 0 -vf {get_ffmpeg_dimens(get_video_size(file), 720)},fps=30 -c:v libx265 ".split()
-        + [str(out_path)],
-        check=True, capture_output=True
-    )
+    global SHUTDOWN
+    try:
+        # Compress with ffmpeg - set max resolution to 720p, 30fps and H.265 encoding
+        ffproc = subprocess.run(
+            ["ffmpeg", "-i", str(file)] +  # Watch out for splitting the file name :P
+            f"-map_metadata 0 -vf {get_ffmpeg_dimens(get_video_size(file), 720)},fps=30 -c:v libx265 ".split()
+            + [str(out_path)],
+            check=True, capture_output=True
+        )
+    except subprocess.CalledProcessError as e:
+        if SHUTDOWN:
+            out_path.unlink(missing_ok=True)
+            return
+        else:
+            raise e  # It wasn't Ctrl-C - rethrow
     logger.trace(ffproc.stdout.decode('utf-8'))
     logger.trace(ffproc.stderr.decode('utf-8'))
     shutil.copystat(file, out_path)
@@ -130,6 +149,7 @@ def is_ignored(file: Path, ignore_globs: list[str]) -> bool:
 # Iterate through all video files
 @logger.catch(onerror=lambda e: sys.exit(10))
 def main():
+    global SHUTDOWN
     logger.debug(f"Starting compression in {INPUT_DIR}")
     logger.trace(f"Output dir: {OUTPUT_DIR} ; Original dir: {ORIGINALS_DIR}")
     for dir in [OUTPUT_DIR, ORIGINALS_DIR]:
@@ -156,8 +176,11 @@ def main():
                 continue
             target_videos.append(file)
 
+    signal.signal(signal.SIGINT, keeb_interrupt_handler)
     for file in tqdm(target_videos):
         compress_file_h265_720p_30fps(file)
+        if SHUTDOWN:
+            break
         stats["total_videos_compressed"] += 1
 
     # Done - print all stats
