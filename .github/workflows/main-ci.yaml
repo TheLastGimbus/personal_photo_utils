@@ -1,0 +1,26 @@
+name: pytest
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  run-tests:
+    name: Setup test assets and run pytest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+      - name: Download test repo
+        # The ">" replaces newlines with spaces
+        run: >
+          git clone --depth 1 --branch v0.1.0
+          https://github.com/TheLastGimbus/__personal_photo_utils_test_data__.git
+          __personal_photo_utils_test_data__
+      - run: ./__personal_photo_utils_test_data__/clean.sh
+      - name: Run pytest
+        run: python -m pytest
