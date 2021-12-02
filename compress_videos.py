@@ -112,7 +112,7 @@ def compress_file_h265_720p_30fps(file: Path):
     shutil.copystat(file, out_path)
     # Save sizes to see how much we save later
     stats["uncompressed_space"] += file.stat().st_size
-    stats["compressed_space"] = out_path.stat().st_size
+    stats["compressed_space"] += out_path.stat().st_size
     shutil.move(file, ORIGINALS_DIR)
 
 
