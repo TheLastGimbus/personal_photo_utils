@@ -150,7 +150,9 @@ def is_ignored(file: Path, ignore_globs: list[str]) -> bool:
 @logger.catch(onerror=lambda e: sys.exit(10))
 def main():
     global SHUTDOWN
-    logger.debug(f"Starting compression in {INPUT_DIR}")
+    logger.debug(f"###### ###### ###### ###### ###### ######  ######")
+    logger.debug(f"###### Starting compression in {INPUT_DIR} ######")
+    logger.debug(f"###### ###### ###### ###### ###### ######  ######")
     logger.trace(f"Output dir: {OUTPUT_DIR} ; Original dir: {ORIGINALS_DIR}")
     for dir in [OUTPUT_DIR, ORIGINALS_DIR]:
         if not dir.exists():
