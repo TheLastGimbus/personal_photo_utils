@@ -53,6 +53,13 @@ ap.add_argument("--output", "-o", help="Output dir for compressed", required=Fal
 ap.add_argument("--cmpignore", help="Location of .cmpignore file which contains files to ignore", required=False)
 ap.add_argument("--verbose", "-v", help="Verbose logging - all levels", action="store_true")
 ap.add_argument("--log-file", help="Log file location", required=False, default="compress_videos_py.log")
+ap.add_argument(
+    "--threads", "-t",
+    help="Number of threads to use - defaults to auto."
+         "Note that different encoding have some max threads limits. H.256 has 16: "
+         "https://github.com/mirrorer/libbpg/blob/0e2aadbe40fd8b962440caa51a52c558ccdbc791/x265/source/x265.h#L291",
+    required=False
+)
 args = ap.parse_args()
 
 INPUT_DIR = Path(args.input)
@@ -116,7 +123,10 @@ def compress_file_h265_720p_30fps(file: Path):
         # Compress with ffmpeg - set max resolution to 720p, 30fps and H.265 encoding
         ffproc = subprocess.run(
             ["ffmpeg", "-i", str(file)] +  # Watch out for splitting the file name :P
-            f"-map_metadata 0 -vf {get_ffmpeg_dimens(get_video_size(file), 720)},fps=30 -c:v libx265 ".split()
+            f"-map_metadata 0 "
+            f"-vf {get_ffmpeg_dimens(get_video_size(file), 720)},fps=30 "
+            f"-c:v libx265 "
+            f"-threads {args.threads if args.threads else 'auto'}".split()
             + [str(out_path)],
             check=True, capture_output=True
         )
@@ -125,6 +135,8 @@ def compress_file_h265_720p_30fps(file: Path):
             out_path.unlink(missing_ok=True)
             return
         else:
+            logger.error(f"ffmpeg stdout: {e.stdout.decode('utf-8')}")
+            logger.error(f"ffmpeg stderr: {e.stderr.decode('utf-8')}")
             raise e  # It wasn't Ctrl-C - rethrow
     logger.trace(ffproc.stdout.decode('utf-8'))
     logger.trace(ffproc.stderr.decode('utf-8'))
