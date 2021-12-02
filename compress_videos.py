@@ -179,7 +179,7 @@ def main():
             target_videos.append(file)
 
     signal.signal(signal.SIGINT, keeb_interrupt_handler)
-    for file in tqdm(target_videos):
+    for file in tqdm(target_videos, desc="All videos", unit="video", smoothing=0.03):
         compress_file_h265_720p_30fps(file)
         if SHUTDOWN:
             break
