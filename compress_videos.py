@@ -62,7 +62,7 @@ CMPIGNORE_FILE = Path(args.cmpignore if args.cmpignore else INPUT_DIR / ".cmpign
 
 logger.remove()
 logger.add(
-    sys.stdout, colorize=True,
+    lambda msg: tqdm.write(msg, end=""), colorize=True,  # Don't leave dead bars with each log
     format="<green>{time:HH:mm:ss}</green> | "
            "<level>{level: <8}</level> | "
            "<level>{message}</level>",
@@ -178,8 +178,9 @@ def main():
                 continue
             target_videos.append(file)
 
+    logger.info(f"Found {stats['total_videos_found']} videos- {len(target_videos)} to compress")
     signal.signal(signal.SIGINT, keeb_interrupt_handler)
-    for file in tqdm(target_videos, desc="All videos", unit="video", smoothing=0.03):
+    for file in tqdm(target_videos, desc="All videos", unit="video", smoothing=0.02):
         compress_file_h265_720p_30fps(file)
         if SHUTDOWN:
             break
