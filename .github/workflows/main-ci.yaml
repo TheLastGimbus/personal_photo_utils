@@ -26,7 +26,7 @@ jobs:
       - name: Download test repo
         # The ">" replaces newlines with spaces
         run: >
-          git clone --depth 1 --branch v0.0.1
+          git clone --depth 1 --branch v0.0.2
           https://github.com/TheLastGimbus/__personal_photo_utils_test_data__.git
           __personal_photo_utils_test_data__
       - run: ./__personal_photo_utils_test_data__/clean.sh

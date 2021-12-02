@@ -6,12 +6,19 @@ def test_get_ffmpeg_dimens():
     assert get_ffmpeg_dimens((10, 30), 720) == "scale=10:-2"
 
 
+def test_parse_cmpignore():
+    from compress_videos import parse_cmpignore
+    with open('__personal_photo_utils_test_data__/DCIM/Camera/.cmpignore', 'r') as f:
+        assert set(parse_cmpignore(f.read())) == {'VID_20191230_215442.mp4', '*.webm'}
+
+
 def test_is_ignored():
     from pathlib import Path
     from compress_videos import is_ignored
     globs = [
         "final.mp4",
         "video*.mp4",
+        "video name with *",
         "*.webm",
     ]
     _ignored = lambda fname: is_ignored(Path(fname), globs)
@@ -20,6 +27,7 @@ def test_is_ignored():
     assert _ignored("video_2137.mp4") == True
     assert _ignored("video_2137.webm") == True
     assert _ignored("video_2137.mkv") == False
+    assert _ignored("video name with spaces omg.mkv") == True
 
 
 def test_main():
