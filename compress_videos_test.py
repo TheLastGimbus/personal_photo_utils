@@ -62,7 +62,7 @@ def test_main():
     assert set(map(lambda x: x.name, cv.OUTPUT_DIR.glob('*'))) == {
         'video-1533589738.cmp1.mp4', '.cmpignore', 'editing_multiple_lines_router_admin_pt2.webm',
         'VID_20210407_014635.cmp1.mp4', 'VID_20191230_215442.mp4', '89122489_891195301331652_5070170126553186304_n.jpg',
-        'some_random_empty.txt', '2ANsayp.png'
+        'some_random_empty.txt', '2ANsayp.png', 'signal-2022-03-12-203337_023.jpeg'
     }
     assert set(map(lambda x: x.name, cv.ORIGINALS_DIR.glob('*'))) == {
         'video-1533589738.mp4', 'VID_20210407_014635.mp4'
