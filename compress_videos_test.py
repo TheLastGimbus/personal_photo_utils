@@ -33,12 +33,12 @@ def test_is_ignored():
 def test_main():
     import compress_videos as cv
     from pathlib import Path
+    import subprocess
+    import json
 
-    from __personal_photo_utils_test_data__.set_datetimes import set_datetimes
     with open('__personal_photo_utils_test_data__/datetimes.json', 'r') as f:
-        import json
         datetimes = json.load(f)
-        set_datetimes(datetimes, Path('__personal_photo_utils_test_data__/DCIM/Camera'))
+    subprocess.run("__personal_photo_utils_test_data__/clean.sh", shell=True)
 
     assets = Path('./__personal_photo_utils_test_data__/DCIM/')
     orig = assets / "orig"
@@ -62,13 +62,13 @@ def test_main():
     assert set(map(lambda x: x.name, cv.OUTPUT_DIR.glob('*'))) == {
         'video-1533589738.cmp1.mp4', '.cmpignore', 'editing_multiple_lines_router_admin_pt2.webm',
         'VID_20210407_014635.cmp1.mp4', 'VID_20191230_215442.mp4', '89122489_891195301331652_5070170126553186304_n.jpg',
-        'some_random_empty.txt', '2ANsayp.png', 'signal-2022-03-12-203337_023.jpeg'
+        'some_random_empty.txt', '2ANsayp.png', 'signal-2022-03-12-203337_023.jpeg', 'IMG_20220729_162347.jpg'
     }
     assert set(map(lambda x: x.name, cv.ORIGINALS_DIR.glob('*'))) == {
         'video-1533589738.mp4', 'VID_20210407_014635.mp4'
     }
     for filename in datetimes:
-        file = cv.OUTPUT_DIR / filename
+        file = cv.OUTPUT_DIR / Path(filename).name
         if not file.exists():
             # If it doesn't exist then it was compressed. Very good! But check it!
             file = file.with_stem(file.stem + "." + cv.EXTENSION_NAMESPACES["h265_720p_30fps"])
