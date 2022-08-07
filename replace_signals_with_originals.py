@@ -64,7 +64,7 @@ print(f'Found {len(dup)} "signals"')
 replaced_count = 0
 for i in dup:
     print(i, dup[i])
-    if (ALBUM_FOLDER / dup[i].name).exists():
+    if i.name != dup[i].name and (ALBUM_FOLDER / dup[i].name).exists():
         print(f'{i.name} (signal-ish) and {dup[i].name} (original) both exist in album folder - only original will be '
               f'left')
         replaced_count += 1
