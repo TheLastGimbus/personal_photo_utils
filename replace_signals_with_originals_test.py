@@ -13,7 +13,7 @@ def test_main():
     # Test if everything is on it's place
     assert set(map(lambda x: x.name, album.glob('*'))) == {
         '2ANsayp.png', '89122489_891195301331652_5070170126553186304_n.jpg', 'IMG_20220729_162347.jpg',
-        'signal-2022-03-12-203337_023.jpeg',
+        'signal-2022-03-12-203337_023.jpeg', 'IMG_20220721_201649.jpg', 'IMG_20220721_203401.jpg'
     }
     # Test if dates are still correct
     with open('__personal_photo_utils_test_data__/datetimes.json', 'r') as f:
