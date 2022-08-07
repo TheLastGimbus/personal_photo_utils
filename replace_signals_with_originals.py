@@ -67,7 +67,7 @@ for i in dup:
     if (ALBUM_FOLDER / dup[i].name).exists():
         print(f'{dup[i].name} (original) and {i.name} (signal-ish) both exist in album folder - only original will be '
               f'left')
-    replaced_count += 1
+        replaced_count += 1
 
 if not opt_dry_run:
     MOVE_FOLDER = ALBUM_FOLDER.parent / f'_{ALBUM_FOLDER.name}_replaced'
