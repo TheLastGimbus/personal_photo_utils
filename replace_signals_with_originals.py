@@ -65,7 +65,7 @@ replaced_count = 0
 for i in dup:
     print(i, dup[i])
     if (ALBUM_FOLDER / dup[i].name).exists():
-        print(f'{dup[i].name} (original) and {i.name} (signal-ish) both exist in album folder - only original will be '
+        print(f'{i.name} (signal-ish) and {dup[i].name} (original) both exist in album folder - only original will be '
               f'left')
         replaced_count += 1
 
